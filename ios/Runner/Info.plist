@@ -45,5 +45,53 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- ===== URL schemes สำหรับ login (LINE / Google / Facebook) =====
+	     เมื่อ login เสร็จ แอปของ provider จะ "เรียกกลับ" เข้าแอปเราผ่าน scheme พวกนี้ -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<!-- LINE -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>line3rdp.$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			</array>
+		</dict>
+		<!-- Google Sign-In: ใช้ REVERSED_CLIENT_ID จาก GoogleService-Info.plist -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.664212462295-cgvrpini8umjsop7fad3j7j723e4m78l</string>
+			</array>
+		</dict>
+		<!-- Facebook: scheme = "fb" + App ID -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1008466955216047</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ===== Facebook SDK config ===== -->
+	<key>FacebookAppID</key>
+	<string>1008466955216047</string>
+	<key>FacebookClientToken</key>
+	<string>0c357142be00a8b4f931b5071d15bb89</string>
+	<key>FacebookDisplayName</key>
+	<string>SpaceDee</string>
+
+	<!-- อนุญาตให้แอปเรา "เปิด" แอปอื่น (LINE/Facebook) เพื่อทำ app-to-app login -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>lineauth2</string>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+	</array>
 </dict>
 </plist>

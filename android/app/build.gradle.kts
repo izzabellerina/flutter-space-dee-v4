@@ -3,6 +3,8 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase (Google login) — ต้องอยู่หลัง Android/Kotlin/Flutter plugin
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -24,7 +26,9 @@ android {
         applicationId = "com.panudet789.flutterSpaceDee"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // flutter_line_sdk ต้องการ Android 7.0 (API 24) ขึ้นไป
+        // จึง override ค่า default ของ Flutter (ปกติต่ำกว่านี้)
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

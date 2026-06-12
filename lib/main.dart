@@ -1,122 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_line_sdk/flutter_line_sdk.dart';
+
+import 'config/line_config.dart';
+import 'screens/splash_screen.dart';
+import 'theme/app_colors.dart';
 
 void main() {
-  runApp(const MyApp());
+  // ต้องเรียกก่อนใช้ plugin ใด ๆ ใน main() — รับประกันว่า engine ฝั่ง native
+  // พร้อมรับคำสั่งแล้ว (ปกติ runApp เรียกให้เอง แต่พอเราจะเรียก setup() ก่อน
+  // runApp ต้องเรียกเองให้ชัด)
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // เตรียม LINE SDK ด้วย Channel ID — ทำครั้งเดียวตอนเปิดแอป
+  // ข้ามถ้ายังไม่ได้กรอก Channel ID จริง (กัน error ตอน dev)
+  if (isLineChannelConfigured) {
+    LineSDK.instance.setup(kLineChannelId).then((_) {
+      debugPrint('LineSDK setup เสร็จ (channelId=$kLineChannelId)');
+    });
+  } else {
+    debugPrint('⚠️ ยังไม่ได้ตั้ง LINE Channel ID — แก้ที่ lib/config/line_config.dart');
+  }
+
+  // จุดเริ่มต้นของแอป Flutter ทุกตัว: runApp() เอา widget ราก (SpaceDeeApp)
+  // ขึ้นไปวาดบนหน้าจอ
+  runApp(const SpaceDeeApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// Widget รากของแอป — กำหนด "ธีมรวม" ของทั้งแอปไว้ที่นี่ที่เดียว
+class SpaceDeeApp extends StatelessWidget {
+  const SpaceDeeApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'SpaceDee',
+      debugShowCheckedModeBanner: false, // ซ่อนแถบ "DEBUG" มุมขวาบน
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // สร้างชุดสีทั้งธีมจาก "สีเมล็ด" (seed) สีหลักของแบรนด์
+        // Flutter จะ generate เฉดสีที่เข้ากันให้อัตโนมัติ (Material 3)
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.brandYellow),
+        // ตั้งฟอนต์หลักของทั้งแอปเป็น Anuphan (ประกาศไว้ใน pubspec.yaml)
+        fontFamily: 'Anuphan',
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      // หน้าแรกที่แอปเปิดมา = Splash (แล้วมันจะพาไป Login เอง)
+      home: const SplashScreen(),
     );
   }
 }

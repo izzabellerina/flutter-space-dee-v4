@@ -44,7 +44,21 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Gradle build output (artifacts — never commit)
+/android/build/
+/android/.gradle/
+
 # Local-only agent tooling (not pushed to remote)
 .claude/
 .agents/
 skills-lock.json
+
+# Local-only dev notes (.md spec/report per change — not pushed)
+dev-notes/
+
+# Credentials / config with keys — keep OUT of git (share securely, not via repo)
+# (ฝั่ง dev ต้องมีไฟล์พวกนี้ในเครื่องตอน build; ดู *.example เป็นต้นแบบ)
+android/app/google-services.json
+android/app/src/main/res/values/strings.xml
+lib/config/line_config.dart
+ios/Runner/GoogleService-Info.plist

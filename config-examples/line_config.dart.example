@@ -1,0 +1,9 @@
+// ต้นแบบของ lib/config/line_config.dart (ไฟล์จริงถูก gitignore เพราะมี channel id)
+// วิธีใช้: copy ไปไว้ที่ lib/config/line_config.dart แล้วใส่ Channel ID จริง
+//   (LINE Developers Console → Channel → Basic settings → Channel ID)
+
+/// ค่าตั้งค่าของ LINE Login
+const String kLineChannelId = 'YOUR_LINE_CHANNEL_ID';
+
+/// เช็คว่ายังเป็นค่า placeholder อยู่ไหม (ยังไม่ได้กรอก Channel ID จริง)
+bool get isLineChannelConfigured => kLineChannelId != 'YOUR_LINE_CHANNEL_ID';

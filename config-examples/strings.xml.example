@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ต้นแบบของ android/app/src/main/res/values/strings.xml (ไฟล์จริงถูก gitignore เพราะมี FB client token) -->
+<!-- วิธีใช้: copy ไปไว้ที่ android/app/src/main/res/values/strings.xml แล้วใส่ค่าจริงจาก Meta for Developers -->
+<resources>
+    <string name="app_name">SpaceDee</string>
+    <string name="facebook_app_id">YOUR_FACEBOOK_APP_ID</string>
+    <string name="fb_login_protocol_scheme">fbYOUR_FACEBOOK_APP_ID</string>
+    <string name="facebook_client_token">YOUR_FACEBOOK_CLIENT_TOKEN</string>
+</resources>
