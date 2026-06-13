@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_line_sdk/flutter_line_sdk.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/line_config.dart';
-import 'screens/splash_screen.dart';
+import 'router/app_router.dart';
 import 'theme/app_colors.dart';
 
 void main() {
@@ -21,9 +22,8 @@ void main() {
     debugPrint('⚠️ ยังไม่ได้ตั้ง LINE Channel ID — แก้ที่ lib/config/line_config.dart');
   }
 
-  // จุดเริ่มต้นของแอป Flutter ทุกตัว: runApp() เอา widget ราก (SpaceDeeApp)
-  // ขึ้นไปวาดบนหน้าจอ
-  runApp(const SpaceDeeApp());
+  // ProviderScope = "ราก" ของ riverpod — ต้องครอบทั้งแอป ไม่งั้นใช้ provider ไม่ได้
+  runApp(const ProviderScope(child: SpaceDeeApp()));
 }
 
 /// Widget รากของแอป — กำหนด "ธีมรวม" ของทั้งแอปไว้ที่นี่ที่เดียว
@@ -32,7 +32,8 @@ class SpaceDeeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // MaterialApp.router = ใช้ go_router จัดการนำทาง (แทน home/Navigator เดิม)
+    return MaterialApp.router(
       title: 'SpaceDee',
       debugShowCheckedModeBanner: false, // ซ่อนแถบ "DEBUG" มุมขวาบน
       theme: ThemeData(
@@ -42,9 +43,34 @@ class SpaceDeeApp extends StatelessWidget {
         // ตั้งฟอนต์หลักของทั้งแอปเป็น Anuphan (ประกาศไว้ใน pubspec.yaml)
         fontFamily: 'Anuphan',
         useMaterial3: true,
+
+        // ── ธีมหลัก = เหลือง สำหรับ "หน้าที่ไม่ใช่ login" ──
+        // (login/splash ใช้พื้นเขียวโดย override Scaffold/ปุ่มของตัวเอง จึงไม่โดนกระทบ)
+        // ตั้งที่เดียวตรงนี้ → ทุกหน้าใหม่ได้สีเหลืองอัตโนมัติ
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.brandYellow,
+          foregroundColor: AppColors.textDark, // ตัวอักษร/back บนเหลือง = เข้ม
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.brandYellow,
+            foregroundColor: AppColors.textDark,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? AppColors.brandYellow
+                : null,
+          ),
+          checkColor: WidgetStateProperty.all(AppColors.textDark),
+        ),
       ),
-      // หน้าแรกที่แอปเปิดมา = Splash (แล้วมันจะพาไป Login เอง)
-      home: const SplashScreen(),
+      routerConfig: appRouter,
     );
   }
 }

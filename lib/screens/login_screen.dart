@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/facebook_auth_service.dart';
 import '../services/google_auth_service.dart';
@@ -68,6 +69,17 @@ class LoginScreen extends StatelessWidget {
                 icon: FontAwesomeIcons.facebook, // โลโก้ Facebook จริง
                 iconColor: const Color(0xFF1877F2), // น้ำเงิน Facebook
                 onPressed: () => _onFacebookLogin(context), // ← ของจริงแล้ว
+              ),
+
+              // ⚠️ TEMP (mockup): ปุ่มชั่วคราวไว้ทดสอบ flow ไปหน้าลงทะเบียน
+              // ของจริงจะไปหน้าลงทะเบียนหลัง login สำเร็จ — อันนี้ไว้เทสเฉย ๆ ลบทีหลังได้
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () => context.push('/register'),
+                child: const Text(
+                  '🧪 ทดสอบ: ไปหน้าลงทะเบียน',
+                  style: TextStyle(color: AppColors.onGreen),
+                ),
               ),
             ],
           ),

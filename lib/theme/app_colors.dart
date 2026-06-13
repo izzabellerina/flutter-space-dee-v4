@@ -22,4 +22,10 @@ class AppColors {
 
   /// สีตัวอักษรบนพื้นเขียว (ขาว) — อ่านง่าย ตัดกับพื้น
   static const Color onGreen = Colors.white;
+
+  /// สีตัวอักษร/ไอคอนบนพื้นเหลือง (เทาเข้ม) — เหลืองสว่าง ต้องใช้ตัวอักษรเข้มถึงอ่านออก
+  static const Color textDark = Color(0xFF333333);
+
+  /// พื้นช่องกรอกอ่อน ๆ ในหน้าธีมเหลือง (เหลืองอ่อนมาก)
+  static const Color fieldFill = Color(0xFFFFF6D9);
 }

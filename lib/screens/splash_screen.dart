@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
-import 'login_screen.dart';
 
 /// หน้า Splash — จอแรกที่โผล่ตอนเปิดแอป
 ///
@@ -38,11 +38,9 @@ class _SplashScreenState extends State<SplashScreen> {
     // ถ้าหน้าถูกทำลายไปแล้วยังไปยุ่งกับ context จะ crash
     if (!mounted) return;
 
-    // pushReplacement = ไปหน้า login แล้ว "แทนที่" หน้า splash ทิ้ง
+    // context.go('/login') = ไปหน้า login แล้ว "แทนที่" stack ทิ้ง (ผ่าน go_router)
     // → user กดปุ่ม back แล้วจะไม่ย้อนกลับมาเห็น splash อีก (ถูกต้องตาม UX)
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
+    context.go('/login');
   }
 
   @override
