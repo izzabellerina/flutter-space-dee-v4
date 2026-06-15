@@ -70,18 +70,45 @@ Future<void> showBookMarketSheet(
   );
 }
 
-/// เนื้อหาภายใน modal sheet "จองล็อคตลาด"
+/// กฎของตลาด (mock) — ไอคอน + ข้อความ
+class _MarketRule {
+  const _MarketRule({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+}
+
+// กฎ (mock) — ของจริงจะดึงจาก backend
+const List<_MarketRule> _marketRules = [
+  _MarketRule(icon: Icons.no_drinks, label: 'ห้ามของมึนเมา'),
+  _MarketRule(icon: Icons.block, label: 'ห้ามของซ้ำ'),
+];
+
+/// 2 ขั้นของแผ่น: เลือกรอบจอง → กฎของตลาด
+enum _SheetStep { booking, rules }
+
+/// เนื้อหาภายใน modal sheet — มี 2 ขั้น (booking / rules) ในแผ่นเดียว
 ///
-/// ทำไม StatelessWidget?
-/// - แค่ "แสดงข้อมูล" (รูป + ชื่อ + รอบ) ไม่มี state ที่เปลี่ยนระหว่างใช้งาน
-class _BookMarketSheet extends StatelessWidget {
+/// ทำไม StatefulWidget?
+/// - ต้องจำว่าตอนนี้อยู่ขั้นไหน (`_step`) + ติ๊ก checkbox รับทราบหรือยัง (`_agreed`)
+///   ค่าพวกนี้เปลี่ยนแล้วต้อง rebuild หน้าจอ → ใช้ StatefulWidget
+class _BookMarketSheet extends StatefulWidget {
   const _BookMarketSheet({required this.name, required this.location});
 
   final String name;
   final String location;
 
   @override
+  State<_BookMarketSheet> createState() => _BookMarketSheetState();
+}
+
+class _BookMarketSheetState extends State<_BookMarketSheet> {
+  _SheetStep _step = _SheetStep.booking; // ขั้นปัจจุบัน
+  bool _agreed = false; // ติ๊ก "รับทราบข้อตกลง" แล้วหรือยัง
+
+  @override
   Widget build(BuildContext context) {
+    final isRules = _step == _SheetStep.rules;
+
     return SizedBox(
       // เต็มจอ 100% (สูงเท่าความสูงจอทั้งหมด)
       height: MediaQuery.of(context).size.height,
@@ -99,14 +126,18 @@ class _BookMarketSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // หัวข้อ sheet
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+            // หัวข้อ sheet (เปลี่ยนตามขั้น)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'จองล็อคตลาด',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                isRules ? 'กฎของตลาด' : 'จองล็อคตลาด',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
+
             // ── เนื้อหา (scroll) ──
             Expanded(
               child: SingleChildScrollView(
@@ -114,90 +145,23 @@ class _BookMarketSheet extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ── รูปตลาด (placeholder) ──
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: AppColors.fieldFill, // กล่องเทา รอรูปจริง
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.storefront,
-                        size: 56,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // ── การ์ดข้อมูลตลาด (ชื่อ + ที่ตั้ง) ──
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: AppColors.cardShadow,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textDark,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                size: 18,
-                                color: AppColors.textDark,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  location,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    // header (รูป + การ์ดตลาด) แสดงเหมือนกันทั้ง 2 ขั้น
+                    _buildHeader(),
                     const SizedBox(height: 16),
-
-                    // ── รายการรอบจอง (การ์ดแสดงข้อมูล กดไม่ได้) ──
-                    for (final round in _rounds) ...[
-                      _RoundCard(round: round),
-                      const SizedBox(height: 12),
-                    ],
-                    const SizedBox(height: 4),
-
-                    // ── ปุ่ม "จองล็อค" ──
-                    ElevatedButton(
-                      onPressed: () =>
-                          _showSnack(context, 'กำลังพัฒนา flow ถัดไป'),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 4),
-                        child: Text(
-                          'จองล็อค',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                    // เนื้อหาเฉพาะขั้น
+                    if (isRules)
+                      _buildRulesContent()
+                    else
+                      _buildRoundsContent(),
                   ],
                 ),
               ),
+            ),
+
+            // ── แถบล่าง (ปุ่ม/checkbox) เปลี่ยนตามขั้น ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: isRules ? _buildRulesActions() : _buildBookingAction(),
             ),
           ],
         ),
@@ -205,7 +169,166 @@ class _BookMarketSheet extends StatelessWidget {
     );
   }
 
-  void _showSnack(BuildContext context, String message) {
+  /// header ที่ใช้ร่วมกันทั้ง 2 ขั้น: รูปตลาด (placeholder) + การ์ดชื่อ/ที่ตั้ง
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // รูปตลาด (placeholder)
+        Container(
+          height: 150,
+          decoration: BoxDecoration(
+            color: AppColors.fieldFill, // กล่องเทา รอรูปจริง
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.storefront,
+            size: 56,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // การ์ดข้อมูลตลาด (ชื่อ + ที่ตั้ง)
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.name,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    size: 18,
+                    color: AppColors.textDark,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      widget.location,
+                      style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// ขั้น booking: รายการรอบจอง (การ์ดแสดงข้อมูล กดไม่ได้)
+  Widget _buildRoundsContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final round in _rounds) ...[
+          _RoundCard(round: round),
+          const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  /// ขั้น rules: หัวข้อ "กฎของตลาด" + แถวไอคอนกฎ
+  Widget _buildRulesContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'กฎของตลาด',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            for (final rule in _marketRules) ...[
+              _RuleItem(rule: rule),
+              const SizedBox(width: 24),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// แถบล่างขั้น booking: ปุ่ม "จองล็อค" → ไปขั้น rules
+  Widget _buildBookingAction() {
+    return SizedBox(
+      width: double.infinity, // ยืดปุ่มเต็มกว้าง (เหมือนปุ่ม "ยืนยัน")
+      child: ElevatedButton(
+        onPressed: () => setState(() => _step = _SheetStep.rules),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            'จองล็อค',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// แถบล่างขั้น rules: checkbox รับทราบ + ปุ่ม "ยืนยัน"
+  Widget _buildRulesActions() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // แถว checkbox — แตะข้อความก็ติ๊กได้
+        InkWell(
+          onTap: () => setState(() => _agreed = !_agreed),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Checkbox(
+                value: _agreed,
+                onChanged: (v) => setState(() => _agreed = v ?? false),
+              ),
+              const Text('รับทราบข้อตกลงของตลาด'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          // ปุ่มกดได้ต่อเมื่อติ๊ก checkbox แล้ว (onPressed=null → ปุ่ม disable เอง)
+          child: ElevatedButton(
+            onPressed: _agreed
+                ? () => _showSnack('กำลังพัฒนา flow ถัดไป')
+                : null,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'ยืนยัน',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showSnack(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
@@ -273,6 +396,35 @@ class _RoundCard extends StatelessWidget {
           _InfoRow(label: 'ราคาต่อล็อค', value: round.price, valueBold: true),
         ],
       ),
+    );
+  }
+}
+
+/// ไอคอนกฎของตลาด — วงกลมขอบแดง + ไอคอนแดง + ข้อความใต้ไอคอน
+class _RuleItem extends StatelessWidget {
+  const _RuleItem({required this.rule});
+  final _MarketRule rule;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.red, width: 2),
+          ),
+          child: Icon(rule.icon, color: Colors.red, size: 32),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          rule.label,
+          style: const TextStyle(fontSize: 12, color: AppColors.textDark),
+        ),
+      ],
     );
   }
 }
