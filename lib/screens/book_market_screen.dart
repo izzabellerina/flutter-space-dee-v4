@@ -83,14 +83,20 @@ const List<_MarketRule> _marketRules = [
   _MarketRule(icon: Icons.block, label: 'ห้ามของซ้ำ'),
 ];
 
-/// 2 ขั้นของแผ่น: เลือกรอบจอง → กฎของตลาด
-enum _SheetStep { booking, rules }
+/// 3 ขั้นของแผ่น: เลือกรอบจอง → กฎของตลาด → รายละเอียดการจอง
+enum _SheetStep { booking, rules, details }
 
-/// เนื้อหาภายใน modal sheet — มี 2 ขั้น (booking / rules) ในแผ่นเดียว
+/// ตัวเลือกการใช้ไฟฟ้า (radio เลือกได้อย่างเดียว)
+enum _Power { light, heavy }
+
+/// ประเภทการขาย (ใช้ชุดเดียวกับหน้าลงทะเบียน register_screen.dart)
+const List<String> _sellTypeOptions = ['เสื้อผ้า', 'อาหาร', 'Street food'];
+
+/// เนื้อหาภายใน modal sheet — มี 3 ขั้น (booking / rules / details) ในแผ่นเดียว
 ///
 /// ทำไม StatefulWidget?
-/// - ต้องจำว่าตอนนี้อยู่ขั้นไหน (`_step`) + ติ๊ก checkbox รับทราบหรือยัง (`_agreed`)
-///   ค่าพวกนี้เปลี่ยนแล้วต้อง rebuild หน้าจอ → ใช้ StatefulWidget
+/// - ต้องจำว่าตอนนี้อยู่ขั้นไหน (`_step`), ติ๊ก checkbox รับทราบหรือยัง (`_agreed`)
+///   และค่าฟอร์ม (ประเภทขาย/จำนวน/รายละเอียด/ไฟฟ้า) — เปลี่ยนแล้วต้อง rebuild
 class _BookMarketSheet extends StatefulWidget {
   const _BookMarketSheet({required this.name, required this.location});
 
@@ -105,9 +111,23 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
   _SheetStep _step = _SheetStep.booking; // ขั้นปัจจุบัน
   bool _agreed = false; // ติ๊ก "รับทราบข้อตกลง" แล้วหรือยัง
 
+  // ── ค่าฟอร์มขั้น details ──
+  String _sellType = _sellTypeOptions.first; // ประเภทการขาย (dropdown)
+  int _quantity = 1; // จำนวนล็อค (ขั้นต่ำ 1)
+  _Power _power = _Power.light; // การใช้ไฟฟ้า (radio)
+  // ช่องกรอก "รายละเอียด" ต้องมี controller เก็บข้อความ → ปล่อยใน dispose กัน leak
+  final TextEditingController _detailsController = TextEditingController();
+
+  @override
+  void dispose() {
+    _detailsController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isRules = _step == _SheetStep.rules;
+    final isDetails = _step == _SheetStep.details;
 
     return SizedBox(
       // เต็มจอ 100% (สูงเท่าความสูงจอทั้งหมด)
@@ -130,7 +150,7 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                isRules ? 'กฎของตลาด' : 'จองล็อคตลาด',
+                _titleForStep(),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -145,12 +165,14 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // header (รูป + การ์ดตลาด) แสดงเหมือนกันทั้ง 2 ขั้น
+                    // header (รูป + การ์ดตลาด) แสดงเหมือนกันทุกขั้น
                     _buildHeader(),
                     const SizedBox(height: 16),
                     // เนื้อหาเฉพาะขั้น
                     if (isRules)
                       _buildRulesContent()
+                    else if (isDetails)
+                      _buildDetailsContent()
                     else
                       _buildRoundsContent(),
                   ],
@@ -161,7 +183,7 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
             // ── แถบล่าง (ปุ่ม/checkbox) เปลี่ยนตามขั้น ──
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: isRules ? _buildRulesActions() : _buildBookingAction(),
+              child: _buildBottomAction(isRules, isDetails),
             ),
           ],
         ),
@@ -313,7 +335,7 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
           // ปุ่มกดได้ต่อเมื่อติ๊ก checkbox แล้ว (onPressed=null → ปุ่ม disable เอง)
           child: ElevatedButton(
             onPressed: _agreed
-                ? () => _showSnack('กำลังพัฒนา flow ถัดไป')
+                ? () => setState(() => _step = _SheetStep.details)
                 : null,
             child: const Padding(
               padding: EdgeInsets.symmetric(vertical: 4),
@@ -325,6 +347,163 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
           ),
         ),
       ],
+    );
+  }
+
+  /// หัวข้อแผ่นตามขั้นปัจจุบัน
+  String _titleForStep() {
+    switch (_step) {
+      case _SheetStep.booking:
+        return 'จองล็อคตลาด';
+      case _SheetStep.rules:
+        return 'กฎของตลาด';
+      case _SheetStep.details:
+        return 'รายละเอียดการจอง';
+    }
+  }
+
+  /// เลือกแถบล่างตามขั้น
+  Widget _buildBottomAction(bool isRules, bool isDetails) {
+    if (isDetails) return _buildNextAction();
+    if (isRules) return _buildRulesActions();
+    return _buildBookingAction();
+  }
+
+  /// ขั้น details: ฟอร์มรายละเอียดการจอง
+  Widget _buildDetailsContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // หมายเหตุของโครงการ
+        Text(
+          'โครงการนี้จัดล็อคแบบสุ่ม',
+          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+        ),
+        const SizedBox(height: 16),
+
+        // ── ประเภทการขาย (dropdown) ──
+        const _FieldLabel('ประเภทการขาย'),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          initialValue: _sellType,
+          decoration: _fieldDecoration(),
+          items: [
+            for (final type in _sellTypeOptions)
+              DropdownMenuItem(value: type, child: Text(type)),
+          ],
+          onChanged: (value) => setState(() => _sellType = value ?? _sellType),
+        ),
+        const SizedBox(height: 16),
+
+        // ── จำนวนล็อค (stepper) + ขนาด/ราคา ──
+        Row(
+          children: [
+            // ปุ่ม − ปิดเมื่อจำนวน = 1 (กันติดลบ)
+            IconButton(
+              onPressed: _quantity > 1
+                  ? () => setState(() => _quantity--)
+                  : null,
+              icon: const Icon(Icons.remove_circle),
+              color: Colors.green,
+              iconSize: 32,
+            ),
+            Text(
+              '$_quantity',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            IconButton(
+              onPressed: () => setState(() => _quantity++),
+              icon: const Icon(Icons.add_circle),
+              color: Colors.green,
+              iconSize: 32,
+            ),
+            const Spacer(),
+            // ขนาด/ราคา (mock)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: const [
+                Text('1X4 ตรม', style: TextStyle(color: AppColors.textDark)),
+                Text(
+                  '฿50/ล็อค',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // ── รายละเอียด (text) ──
+        const _FieldLabel('*รายละเอียด'),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _detailsController,
+          decoration: _fieldDecoration(hint: 'รายละเอียดสินค้า'),
+        ),
+        const SizedBox(height: 16),
+
+        // ── การใช้ไฟฟ้า (radio เลือกอย่างเดียว) ──
+        const _FieldLabel('*การใช้ไฟฟ้า'),
+        // RadioGroup = ตัวจัดการค่าที่เลือกของกลุ่ม radio (API ใหม่แทน groupValue เดิม)
+        RadioGroup<_Power>(
+          groupValue: _power,
+          onChanged: (v) => setState(() => _power = v ?? _power),
+          child: Column(
+            children: [
+              _PowerRadioTile(
+                label: 'ใช้ไฟเบา',
+                price: '฿0',
+                value: _Power.light,
+                onTap: () => setState(() => _power = _Power.light),
+              ),
+              _PowerRadioTile(
+                label: 'ใช้ไฟหนัก',
+                price: '฿50',
+                value: _Power.heavy,
+                onTap: () => setState(() => _power = _Power.heavy),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// แถบล่างขั้น details: ปุ่ม "ถัดไป"
+  Widget _buildNextAction() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => _showSnack('กำลังพัฒนา flow ถัดไป'),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            'ถัดไป',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// กล่องตกแต่งช่องกรอก (พื้นเทาตามธีม ไม่มีเส้นขอบ)
+  InputDecoration _fieldDecoration({String? hint}) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: AppColors.fieldFill,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
     );
   }
 
@@ -425,6 +604,56 @@ class _RuleItem extends StatelessWidget {
           style: const TextStyle(fontSize: 12, color: AppColors.textDark),
         ),
       ],
+    );
+  }
+}
+
+/// label ของช่องกรอก (ตัวหนาเล็ก ๆ เหนือ field)
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textDark,
+      ),
+    );
+  }
+}
+
+/// แถว radio เลือกการใช้ไฟฟ้า: ปุ่ม radio + ชื่อ (ซ้าย) + ราคา (ขวา)
+///
+/// ค่า groupValue/การเปลี่ยนค่า จัดการโดย `RadioGroup` ที่ครอบอยู่ด้านนอก
+/// (Radio รับแค่ `value` ของตัวเอง); `onTap` ให้แตะทั้งแถวแล้วเลือกได้
+class _PowerRadioTile extends StatelessWidget {
+  const _PowerRadioTile({
+    required this.label,
+    required this.price,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final String price;
+  final _Power value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Radio<_Power>(value: value),
+          Expanded(child: Text(label)),
+          Text(price, style: const TextStyle(color: AppColors.textDark)),
+        ],
+      ),
     );
   }
 }
