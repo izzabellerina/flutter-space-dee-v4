@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import 'book_market_screen.dart';
 
 /// ข้อมูลตลาด (mock) — ยังไม่มี backend
 class _Market {
@@ -92,7 +93,12 @@ class _SelectMarketScreenState extends State<SelectMarketScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, i) => _MarketCard(
                         market: filtered[i],
-                        onTap: () => _showSnack('กำลังพัฒนา flow ถัดไป'),
+                        // กดตลาด → เปิด modal sheet "จองล็อคตลาด" เลื่อนขึ้นจากล่าง
+                        onTap: () => showBookMarketSheet(
+                          context,
+                          name: filtered[i].name,
+                          location: filtered[i].location,
+                        ),
                       ),
                     ),
             ),
