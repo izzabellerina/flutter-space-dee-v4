@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // SystemUiOverlayStyle
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../state/register_form.dart';
 import '../theme/app_colors.dart';
@@ -62,7 +63,8 @@ class HomeTab extends ConsumerWidget {
                           title: 'จองรายวัน',
                           subtitle: 'สัญญาระยะสั้น\nรายวัน',
                           icon: Icons.wb_sunny,
-                          onTap: () => _comingSoon(context),
+                          // เริ่ม flow จองรายวัน → ไปหน้าเลือกตลาด
+                          onTap: () => context.push('/select-market'),
                         ),
                       ),
                       const SizedBox(width: 12),

@@ -4,6 +4,7 @@ import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/payment_screen.dart';
 import '../screens/register_screen.dart';
+import '../screens/select_market_screen.dart';
 import '../screens/splash_screen.dart';
 
 /// ── ระบบนำทางด้วย go_router ──
@@ -35,6 +36,11 @@ final appRouter = GoRouter(
       path: '/payment',
       // ชื่อตลาดถูกส่งมาผ่าน extra (กดมาจากการ์ดการจอง)
       builder: (context, state) => PaymentScreen(market: state.extra as String?),
+    ),
+    GoRoute(
+      path: '/select-market',
+      // เปิดเมื่อกดปุ่ม "จองรายวัน" ในหน้า Home
+      builder: (context, state) => const SelectMarketScreen(),
     ),
   ],
 );
