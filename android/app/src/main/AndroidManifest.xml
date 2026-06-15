@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- จำเป็นสำหรับ login ออนไลน์ (Facebook/Google/LINE) -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- บันทึก QR ลงแกลเลอรี (package gal) — จำเป็นเฉพาะ Android 9 (API 28) ลงไป
+         ตั้งแต่ API 29 (Android 10) ขึ้นไปใช้ scoped storage ไม่ต้องขอ permission นี้ -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
     <application
         android:label="flutter_space_dee"
         android:name="${applicationName}"

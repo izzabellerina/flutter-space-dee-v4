@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/payment_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/splash_screen.dart';
 
@@ -29,6 +30,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/home',
       builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/payment',
+      // ชื่อตลาดถูกส่งมาผ่าน extra (กดมาจากการ์ดการจอง)
+      builder: (context, state) => PaymentScreen(market: state.extra as String?),
     ),
   ],
 );

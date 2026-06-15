@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import 'booking_list_tab.dart';
 import 'home_tab.dart';
 
 /// หน้าหลักหลัง login/ลงทะเบียน — มี bottom navigation 4 แท็บ
@@ -20,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // 4 แท็บ — ตอนนี้มีแค่ "หน้าหลัก" ที่ทำจริง อีก 3 เป็น placeholder
   static const List<Widget> _tabs = [
     HomeTab(),
-    _PlaceholderTab(label: 'การจอง'),
+    BookingListTab(),
     _PlaceholderTab(label: 'ประวัติ'),
     _PlaceholderTab(label: 'อื่น ๆ'),
   ];
