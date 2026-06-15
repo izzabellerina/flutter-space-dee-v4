@@ -46,13 +46,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // พื้นหลังเขียวเข้มตามดีไซน์ (ใช้สีกลางจาก AppColors)
-      backgroundColor: AppColors.loginGreen,
-      body: Center(
-        // โลโก้ SVG กลางจอ — flutter_svg เรนเดอร์ไฟล์ .svg ให้คมทุกขนาด
-        child: SvgPicture.asset(
-          'assets/images/logo_spacedee.svg',
-          width: 180,
+      // พื้นหลังไล่สี teal (gradient ใส่ที่ Scaffold ตรง ๆ ไม่ได้ → ห่อด้วย Container)
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.loginGradient),
+        child: Center(
+          // โลโก้ SVG กลางจอ — flutter_svg เรนเดอร์ไฟล์ .svg ให้คมทุกขนาด
+          child: SvgPicture.asset(
+            'assets/images/logo_spacedee.svg',
+            width: 180,
+          ),
         ),
       ),
     );

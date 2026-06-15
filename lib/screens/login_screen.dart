@@ -18,70 +18,71 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.loginGreen,
-      body: SafeArea(
-        // SafeArea กันไม่ให้เนื้อหาทับรอยบาก/แถบสถานะของมือถือ
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // ── โลโก้ (มีคำว่า "spacedee" ในตัวอยู่แล้ว จึงไม่ต้องมีชื่อซ้ำ) ──
-              SvgPicture.asset(
-                'assets/images/logo_spacedee.svg',
-                width: 140,
-              ),
-              const SizedBox(height: 20),
+      // พื้นหลังไล่สี teal (ห่อ body ด้วย Container เพราะ Scaffold ใส่ gradient ตรง ๆ ไม่ได้)
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.loginGradient),
+        child: SafeArea(
+          // SafeArea กันไม่ให้เนื้อหาทับรอยบาก/แถบสถานะของมือถือ
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // ── โลโก้ (มีคำว่า "spacedee" ในตัวอยู่แล้ว จึงไม่ต้องมีชื่อซ้ำ) ──
+                SvgPicture.asset('assets/images/logo_spacedee.svg', width: 140),
+                const SizedBox(height: 20),
 
-              // ── ข้อความต้อนรับ ──
-              const Text(
-                'ยินดีต้อนรับ',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.onGreen,
+                // ── ข้อความต้อนรับ ──
+                const Text(
+                  'ยินดีต้อนรับ',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.onGreen,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
+                const SizedBox(height: 40),
 
-              // ── ปุ่ม login 3 ทาง ──
-              // ดีไซน์: ทุกปุ่ม "พื้นขาว + ตัวอักษรเข้ม" เหมือนกันหมด
-              // แล้วแยกแบรนด์ด้วย "สีไอคอน" เท่านั้น → ลดจำนวนสีบนจอ
-              // ทำให้ identity เหลือง/เขียวของ SpaceDee เด่น และปุ่มดูเป็นชุดเดียวกัน
-              // หมายเหตุ: ไอคอนยังเป็น Material icon ชั่วคราว (placeholder)
-              // ตอนต่อ SDK จริงค่อยเปลี่ยนเป็นโลโก้แบรนด์จริง
-              _LoginButton(
-                label: 'เข้าสู่ระบบด้วย LINE',
-                icon: FontAwesomeIcons.line, // โลโก้ LINE จริง
-                iconColor: const Color(0xFF06C755), // เขียว LINE
-                onPressed: () => _onLineLogin(context), // ← ของจริงแล้ว (ไม่ใช่ mock)
-              ),
-              const SizedBox(height: 16),
-              _LoginButton(
-                label: 'เข้าสู่ระบบด้วย Gmail',
-                icon: FontAwesomeIcons.google, // โลโก้ Google จริง
-                iconColor: const Color(0xFFEA4335), // แดง Google
-                onPressed: () => _onGoogleLogin(context), // ← ของจริงแล้ว
-              ),
-              const SizedBox(height: 16),
-              _LoginButton(
-                label: 'เข้าสู่ระบบด้วย Facebook',
-                icon: FontAwesomeIcons.facebook, // โลโก้ Facebook จริง
-                iconColor: const Color(0xFF1877F2), // น้ำเงิน Facebook
-                onPressed: () => _onFacebookLogin(context), // ← ของจริงแล้ว
-              ),
-
-              // ⚠️ TEMP (mockup): ปุ่มชั่วคราวไว้ทดสอบ flow ไปหน้าลงทะเบียน
-              // ของจริงจะไปหน้าลงทะเบียนหลัง login สำเร็จ — อันนี้ไว้เทสเฉย ๆ ลบทีหลังได้
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () => context.push('/register'),
-                child: const Text(
-                  '🧪 ทดสอบ: ไปหน้าลงทะเบียน',
-                  style: TextStyle(color: AppColors.onGreen),
+                // ── ปุ่ม login 3 ทาง ──
+                // ดีไซน์: ทุกปุ่ม "พื้นขาว + ตัวอักษรเข้ม" เหมือนกันหมด
+                // แล้วแยกแบรนด์ด้วย "สีไอคอน" เท่านั้น → ลดจำนวนสีบนจอ
+                // ทำให้ identity เหลือง/เขียวของ SpaceDee เด่น และปุ่มดูเป็นชุดเดียวกัน
+                // หมายเหตุ: ไอคอนยังเป็น Material icon ชั่วคราว (placeholder)
+                // ตอนต่อ SDK จริงค่อยเปลี่ยนเป็นโลโก้แบรนด์จริง
+                _LoginButton(
+                  label: 'เข้าสู่ระบบด้วย LINE',
+                  icon: FontAwesomeIcons.line, // โลโก้ LINE จริง
+                  iconColor: const Color(0xFF06C755), // เขียว LINE
+                  onPressed: () =>
+                      _onLineLogin(context), // ← ของจริงแล้ว (ไม่ใช่ mock)
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                _LoginButton(
+                  label: 'เข้าสู่ระบบด้วย Gmail',
+                  icon: FontAwesomeIcons.google, // โลโก้ Google จริง
+                  iconColor: const Color(0xFFEA4335), // แดง Google
+                  onPressed: () => _onGoogleLogin(context), // ← ของจริงแล้ว
+                ),
+                const SizedBox(height: 16),
+                _LoginButton(
+                  label: 'เข้าสู่ระบบด้วย Facebook',
+                  icon: FontAwesomeIcons.facebook, // โลโก้ Facebook จริง
+                  iconColor: const Color(0xFF1877F2), // น้ำเงิน Facebook
+                  onPressed: () => _onFacebookLogin(context), // ← ของจริงแล้ว
+                ),
+
+                // ⚠️ TEMP (mockup): ปุ่มชั่วคราวไว้ทดสอบ flow ไปหน้าลงทะเบียน
+                // ของจริงจะไปหน้าลงทะเบียนหลัง login สำเร็จ — อันนี้ไว้เทสเฉย ๆ ลบทีหลังได้
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () => context.push('/register'),
+                  child: const Text(
+                    '🧪 ทดสอบ: ไปหน้าลงทะเบียน',
+                    style: TextStyle(color: AppColors.onGreen),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

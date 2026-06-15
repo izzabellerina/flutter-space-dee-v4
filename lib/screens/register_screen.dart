@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../state/register_form.dart';
 import '../theme/app_colors.dart';
@@ -79,7 +80,7 @@ class RegisterScreen extends ConsumerWidget {
               height: 52,
               // ปุ่มใช้สีจาก elevatedButtonTheme กลาง (เหลือง + ตัวอักษรเข้ม)
               child: ElevatedButton(
-                onPressed: () => _onSubmit(context, ref),
+                onPressed: () => _onSubmit(context),
                 child: const Text(
                   'ลงทะเบียน',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -114,28 +115,10 @@ class RegisterScreen extends ConsumerWidget {
         ),
       );
 
-  /// กด "ลงทะเบียน" (mockup) → อ่าน state จาก riverpod แล้วเด้ง dialog สรุป
-  void _onSubmit(BuildContext context, WidgetRef ref) {
-    final form = ref.read(registerFormProvider);
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('ข้อมูลที่กรอก (mockup)'),
-        content: Text(
-          'ชื่อ: ${form.firstName}\n'
-          'นามสกุล: ${form.lastName}\n'
-          'ที่อยู่: ${form.address}\n'
-          'ประเภทที่ขาย: '
-          '${form.sellTypes.isEmpty ? "-" : form.sellTypes.join(", ")}\n'
-          'เบอร์โทร: ${form.phone}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('ปิด'),
-          ),
-        ],
-      ),
-    );
+  /// กด "ลงทะเบียน" (mockup) → เข้าหน้าหลัก
+  /// ข้อมูลที่กรอกถูกเก็บไว้ใน registerFormProvider แล้ว (หน้า Home อ่านชื่อไปแสดง)
+  void _onSubmit(BuildContext context) {
+    // go = แทนที่ stack → กด back จากหน้า Home จะไม่ย้อนกลับมาหน้าลงทะเบียน
+    context.go('/home');
   }
 }

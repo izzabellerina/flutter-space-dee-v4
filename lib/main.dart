@@ -44,12 +44,16 @@ class SpaceDeeApp extends StatelessWidget {
         fontFamily: 'Anuphan',
         useMaterial3: true,
 
+        // พื้นหลัง body ของทุกหน้า = ขาว (login/splash override ด้วย gradient เอง)
+        scaffoldBackgroundColor: Colors.white,
+
         // ── ธีมหลัก = เหลือง สำหรับ "หน้าที่ไม่ใช่ login" ──
         // (login/splash ใช้พื้นเขียวโดย override Scaffold/ปุ่มของตัวเอง จึงไม่โดนกระทบ)
         // ตั้งที่เดียวตรงนี้ → ทุกหน้าใหม่ได้สีเหลืองอัตโนมัติ
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.brandYellow,
           foregroundColor: AppColors.textDark, // ตัวอักษร/back บนเหลือง = เข้ม
+          surfaceTintColor: Colors.transparent, // กัน M3 ลงสีจาง ๆ ตอน scroll
           elevation: 0,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
