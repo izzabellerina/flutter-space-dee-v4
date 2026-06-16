@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
 
@@ -476,12 +477,12 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
     );
   }
 
-  /// แถบล่างขั้น details: ปุ่ม "ถัดไป"
+  /// แถบล่างขั้น details: ปุ่ม "ถัดไป" → ปิดแผ่น แล้วเปิดหน้าสรุป (หน้าใหม่)
   Widget _buildNextAction() {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => _showSnack('กำลังพัฒนา flow ถัดไป'),
+        onPressed: _goToSummary,
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 4),
           child: Text(
@@ -490,6 +491,24 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
           ),
         ),
       ),
+    );
+  }
+
+  /// ปิดแผ่น modal แล้ว push หน้า "สรุปรายการจอง"
+  void _goToSummary() {
+    // เก็บ router ref ก่อนปิดแผ่น — หลัง pop ใช้ context ของแผ่น push ไม่ได้
+    // (widget ถูกถอดออกจากต้นไม้แล้ว)
+    final router = GoRouter.of(context);
+    Navigator.of(context).pop(); // ปิด modal sheet
+    router.push(
+      '/booking-summary',
+      extra: {
+        'market': widget.name,
+        'sellType': _sellType,
+        'quantity': _quantity,
+        'details': _detailsController.text,
+        'heavyPower': _power == _Power.heavy,
+      },
     );
   }
 
@@ -505,12 +524,6 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
         borderSide: BorderSide.none,
       ),
     );
-  }
-
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

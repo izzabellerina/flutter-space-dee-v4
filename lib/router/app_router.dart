@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/booking_summary_screen.dart';
 import '../screens/payment_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/select_market_screen.dart';
@@ -41,6 +42,12 @@ final appRouter = GoRouter(
       path: '/select-market',
       // เปิดเมื่อกดปุ่ม "จองรายวัน" ในหน้า Home
       builder: (context, state) => const SelectMarketScreen(),
+    ),
+    GoRoute(
+      path: '/booking-summary',
+      // เปิดเมื่อกด "ถัดไป" ในขั้นรายละเอียด (ค่าฟอร์มส่งมาผ่าน extra)
+      builder: (context, state) =>
+          BookingSummaryScreen(summary: state.extra as Map<String, dynamic>?),
     ),
   ],
 );
