@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/booking_success_screen.dart';
 import '../screens/booking_summary_screen.dart';
 import '../screens/payment_screen.dart';
 import '../screens/register_screen.dart';
@@ -48,6 +49,12 @@ final appRouter = GoRouter(
       // เปิดเมื่อกด "ถัดไป" ในขั้นรายละเอียด (ค่าฟอร์มส่งมาผ่าน extra)
       builder: (context, state) =>
           BookingSummaryScreen(summary: state.extra as Map<String, dynamic>?),
+    ),
+    GoRoute(
+      path: '/booking-success',
+      // เปิดเมื่อกด "ยืนยันการจองล็อค" ในหน้าสรุป
+      builder: (context, state) =>
+          BookingSuccessScreen(result: state.extra as Map<String, dynamic>?),
     ),
   ],
 );

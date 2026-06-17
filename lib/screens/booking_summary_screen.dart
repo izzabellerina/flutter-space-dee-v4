@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
 
@@ -104,8 +105,11 @@ class BookingSummaryScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () =>
-                          _showSnack(context, 'กำลังพัฒนา flow ถัดไป'),
+                      // ยืนยัน → ไปหน้า "การจองสำเร็จ" (ส่งตลาด+จำนวนล็อคไปด้วย)
+                      onPressed: () => context.push(
+                        '/booking-success',
+                        extra: {'market': market, 'quantity': quantity},
+                      ),
                       child: const Padding(
                         padding: EdgeInsets.symmetric(vertical: 4),
                         child: Text(
@@ -125,12 +129,6 @@ class BookingSummaryScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
