@@ -67,6 +67,8 @@ Future<void> showBookMarketSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
+    // ตัดเนื้อหาตาม shape → มุมบนของรูป hero โค้งตามแผ่น
+    clipBehavior: Clip.antiAlias,
     builder: (context) => _BookMarketSheet(name: name, location: location),
   );
 }
@@ -111,6 +113,7 @@ class _BookMarketSheet extends StatefulWidget {
 class _BookMarketSheetState extends State<_BookMarketSheet> {
   _SheetStep _step = _SheetStep.booking; // ขั้นปัจจุบัน
   bool _agreed = false; // ติ๊ก "รับทราบข้อตกลง" แล้วหรือยัง
+  int? _selectedRound; // เลข "รอบ" ที่ผู้ใช้เลือก (null = ยังไม่เลือก)
 
   // ── ค่าฟอร์มขั้น details ──
   String _sellType = _sellTypeOptions.first; // ประเภทการขาย (dropdown)
@@ -133,135 +136,158 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
     return SizedBox(
       // เต็มจอ 100% (สูงเท่าความสูงจอทั้งหมด)
       height: MediaQuery.of(context).size.height,
-      child: SafeArea(
-        // กันเนื้อหาทับ status bar (บน) และปุ่ม/แถบล่างของเครื่อง
-        child: Column(
-          children: [
-            // ── drag handle (ขีดเทาด้านบนบอกว่าปัดลงปิดได้) ──
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 4),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.borderGrey,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // หัวข้อ sheet (เปลี่ยนตามขั้น)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                _titleForStep(),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-
-            // ── เนื้อหา (scroll) ──
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // header (รูป + การ์ดตลาด) แสดงเหมือนกันทุกขั้น
-                    _buildHeader(),
-                    const SizedBox(height: 16),
-                    // เนื้อหาเฉพาะขั้น
-                    if (isRules)
-                      _buildRulesContent()
-                    else if (isDetails)
-                      _buildDetailsContent()
-                    else
-                      _buildRoundsContent(),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── แถบล่าง (ปุ่ม/checkbox) เปลี่ยนตามขั้น ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: _buildBottomAction(isRules, isDetails),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// header ที่ใช้ร่วมกันทั้ง 2 ขั้น: รูปตลาด (placeholder) + การ์ดชื่อ/ที่ตั้ง
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // รูปตลาด (placeholder)
-        Container(
-          height: 150,
-          decoration: BoxDecoration(
-            color: AppColors.fieldFill, // กล่องเทา รอรูปจริง
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(
-            Icons.storefront,
-            size: 56,
-            color: AppColors.textDark,
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // การ์ดข้อมูลตลาด (ชื่อ + ที่ตั้ง)
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: AppColors.cardShadow,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.name,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
+      child: Column(
+        children: [
+          // ── เนื้อหา (scroll) — รูป hero เต็มขอบ + การ์ดขาวเหลื่อมขึ้นมาทับ ──
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.zero, // ไม่มี padding → รูป hero เต็มขอบ
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.location_on,
-                    size: 18,
-                    color: AppColors.textDark,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      widget.location,
-                      style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                  // รูป hero + ปุ่มลอย
+                  _buildHero(context),
+                  // การ์ดเนื้อหาสีขาว เหลื่อมขึ้นมาทับขอบล่างของรูป (-20)
+                  Transform.translate(
+                    offset: const Offset(0, -20),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // หัวข้อขั้น
+                          Text(
+                            _titleForStep(),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // การ์ดข้อมูลตลาด (ชื่อ + ที่ตั้ง)
+                          _buildMarketCard(),
+                          const SizedBox(height: 16),
+                          // เนื้อหาเฉพาะขั้น
+                          if (isRules)
+                            _buildRulesContent()
+                          else if (isDetails)
+                            _buildDetailsContent()
+                          else
+                            _buildRoundsContent(),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
+          ),
+
+          // ── แถบล่าง (ปุ่ม/checkbox) เปลี่ยนตามขั้น ──
+          SafeArea(
+            top: false, // กันแค่ขอบล่าง (รูป hero ไหลขึ้นบนได้)
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: _buildBottomAction(isRules, isDetails),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// รูป hero เต็มขอบด้านบน (placeholder) + ปุ่มกลมปิดลอยมุมซ้ายบน
+  Widget _buildHero(BuildContext context) {
+    // อ่านความสูง status bar จาก "View" ของเครื่องตรง ๆ
+    // (ใน modal sheet ที่ useSafeArea:false Flutter เรียก MediaQuery.removePadding
+    //  ทำให้ทั้ง padding.top และ viewPadding.top เป็น 0 — ต้องดึงจาก View แทน)
+    final topInset = MediaQueryData.fromView(View.of(context)).padding.top;
+    return Stack(
+      children: [
+        // รูปตลาด (placeholder) เต็มกว้าง ไหลขึ้นใต้ status bar
+        Container(
+          height: 210,
+          color: AppColors.fieldFill, // กล่องเทา รอรูปจริง
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.storefront,
+            size: 64,
+            color: AppColors.textDark,
+          ),
+        ),
+        // ปุ่มกลมปิด (ลอยบนรูป เลี่ยง status bar)
+        Positioned(
+          top: topInset + 8,
+          left: 12,
+          child: Material(
+            color: Colors.white,
+            shape: const CircleBorder(),
+            elevation: 2,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => Navigator.of(context).pop(),
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(Icons.arrow_back, color: AppColors.textDark),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  /// ขั้น booking: รายการรอบจอง (การ์ดแสดงข้อมูล กดไม่ได้)
+  /// ข้อมูลตลาด (ชื่อ + ที่ตั้ง) — แบนเรียบไปกับพื้นขาว (ไม่มีกล่อง/เงา)
+  Widget _buildMarketCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.name,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Icon(Icons.location_on, size: 18, color: AppColors.textDark),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                widget.location,
+                style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// ขั้น booking: รายการรอบจอง (กดเลือกได้; รอบที่ยังไม่ถึงเวลากดไม่ได้)
   Widget _buildRoundsContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final round in _rounds) ...[
-          _RoundCard(round: round),
+          _RoundCard(
+            round: round,
+            selected: _selectedRound == round.number,
+            // กดเลือกได้เฉพาะรอบที่เปิดจองอยู่ (ยังไม่ถึงเวลา → onTap = null)
+            onTap: round.isOpen
+                ? () => setState(() => _selectedRound = round.number)
+                : null,
+          ),
           const SizedBox(height: 12),
         ],
       ],
@@ -527,66 +553,89 @@ class _BookMarketSheetState extends State<_BookMarketSheet> {
   }
 }
 
-/// การ์ดแสดงข้อมูลรอบจอง — **กดไม่ได้** (เป็นแค่ข้อมูล)
+/// การ์ดรอบจอง — กดเลือกได้ (เลือกแล้วมี outline)
 ///
-/// ใช้ Container เฉย ๆ (ไม่ใช่ Material+InkWell) → ไม่มี ripple ไม่ตอบสนองการกด
+/// - `onTap == null` → กดไม่ได้ (รอบที่ยังไม่ถึงเวลาจอง)
+/// - `selected == true` → ขอบหนารอบการ์ด แสดงว่าเลือกรอบนี้อยู่
 class _RoundCard extends StatelessWidget {
-  const _RoundCard({required this.round});
+  const _RoundCard({
+    required this.round,
+    required this.selected,
+    required this.onTap,
+  });
   final _Round round;
+  final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     // สถานะ: เปิดจอง = เขียว, ยังไม่ถึงเวลา = เทา
     final statusColor = round.isOpen ? Colors.green[700] : Colors.grey;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.brandYellow, // เหลืองตามกฎธีม
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // หัวการ์ด: ไอคอน + "รอบที่ N" (ซ้าย) ... สถานะ (ขวา)
-          Row(
+    return Material(
+      color: AppColors.brandYellow, // เหลืองตามกฎธีม
+      elevation: 3,
+      shadowColor: Colors.black45,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias, // ตัด ripple ให้อยู่ในมุมมน
+      child: InkWell(
+        onTap: onTap, // null = กดไม่ได้ (ยังไม่ถึงเวลาจอง)
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            // เลือกอยู่ → ขอบหนาบอกว่าเลือกรอบนี้
+            border: selected
+                ? Border.all(color: AppColors.textDark, width: 3)
+                : null,
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                round.isOpen ? Icons.event_available : Icons.lock_clock,
-                size: 20,
-                color: AppColors.textDark,
+              // หัวการ์ด: ไอคอน + "รอบที่ N" (ซ้าย) ... สถานะ (ขวา)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    round.isOpen ? Icons.event_available : Icons.lock_clock,
+                    size: 20,
+                    color: AppColors.textDark,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'รอบที่ ${round.number}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    round.status,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              Text(
-                'รอบที่ ${round.number}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                round.status,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
-                ),
+              const SizedBox(height: 10),
+
+              // ช่วงเวลาจอง
+              _InfoRow(label: 'ช่วงเวลาจอง', value: round.dateRange),
+              const SizedBox(height: 8),
+
+              // ราคาต่อล็อค
+              _InfoRow(
+                label: 'ราคาต่อล็อค',
+                value: round.price,
+                valueBold: true,
               ),
             ],
           ),
-          const SizedBox(height: 10),
-
-          // ช่วงเวลาจอง
-          _InfoRow(label: 'ช่วงเวลาจอง', value: round.dateRange),
-          const SizedBox(height: 8),
-
-          // ราคาต่อล็อค
-          _InfoRow(label: 'ราคาต่อล็อค', value: round.price, valueBold: true),
-        ],
+        ),
       ),
     );
   }

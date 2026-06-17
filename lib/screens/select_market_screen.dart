@@ -116,7 +116,7 @@ class _SelectMarketScreenState extends State<SelectMarketScreen> {
 }
 
 /// การ์ดตลาด — รูป (placeholder) + ชื่อ + ที่ตั้ง
-/// สไตล์เดียวกับการ์ด/ปุ่มอื่นในแอป (Material + InkWell + เงา, พื้นเหลืองตามธีม)
+/// Material + InkWell + เงา, พื้นขาว
 class _MarketCard extends StatelessWidget {
   const _MarketCard({required this.market, required this.onTap});
 
@@ -126,7 +126,7 @@ class _MarketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.brandYellow, // เหลืองตามกฎธีม
+      color: Colors.white, // พื้นขาว (คงเงาไว้)
       borderRadius: BorderRadius.circular(16),
       elevation: 3,
       shadowColor: Colors.black45,

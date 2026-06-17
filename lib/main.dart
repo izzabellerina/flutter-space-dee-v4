@@ -19,7 +19,9 @@ void main() {
       debugPrint('LineSDK setup เสร็จ (channelId=$kLineChannelId)');
     });
   } else {
-    debugPrint('⚠️ ยังไม่ได้ตั้ง LINE Channel ID — แก้ที่ lib/config/line_config.dart');
+    debugPrint(
+      '⚠️ ยังไม่ได้ตั้ง LINE Channel ID — แก้ที่ lib/config/line_config.dart',
+    );
   }
 
   // ProviderScope = "ราก" ของ riverpod — ต้องครอบทั้งแอป ไม่งั้นใช้ provider ไม่ได้
