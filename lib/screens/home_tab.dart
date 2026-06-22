@@ -13,8 +13,9 @@ class HomeTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // select = อ่านเฉพาะ firstName → rebuild เมื่อ "ชื่อ" เปลี่ยนเท่านั้น (ไม่ใช่ทุก field)
-    final firstName =
-        ref.watch(registerFormProvider.select((f) => f.firstName));
+    final firstName = ref.watch(
+      registerFormProvider.select((f) => f.firstName),
+    );
     final name = firstName.isEmpty ? 'ผู้ใช้' : firstName;
     // ความสูงของ status bar (เวลา/แบต) — เอามาเป็น padding บนของแถบหัว
     // เพื่อให้ gradient ไล่ขึ้นไปหลัง status bar แต่การ์ดไม่โดน status bar ทับ
@@ -33,7 +34,9 @@ class HomeTab extends ConsumerWidget {
             // การ์ดทักทาย (สีขาว) ลอยอยู่บนแถบนี้
             Container(
               width: double.infinity,
-              decoration: const BoxDecoration(gradient: AppColors.greetingGradient),
+              decoration: const BoxDecoration(
+                gradient: AppColors.greetingGradient,
+              ),
               padding: EdgeInsets.fromLTRB(16, topInset + 16, 16, 16),
               child: _GreetingCard(name: name),
             ),

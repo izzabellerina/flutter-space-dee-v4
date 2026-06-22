@@ -2,32 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../models/response_model.dart';
+import '../services/auth_service.dart';
 import '../state/register_form.dart';
+import '../state/session.dart';
 import '../theme/app_colors.dart';
 
-/// หน้า "ลงทะเบียน" (mockup ทดสอบ flow)
+/// หน้า "ลงทะเบียน" — เปิดเมื่อ login social สำเร็จแต่ยังไม่มี account (404)
 ///
-/// เป็น [ConsumerWidget] = StatelessWidget เวอร์ชันที่เข้าถึง riverpod ได้ (มี `ref`)
-/// - text field เขียนค่าเข้า provider ผ่าน onChanged (ไม่ใช้ controller — กัน cursor เด้ง)
-/// - checkbox อ่านสถานะจาก provider (watch) + กดแล้ว toggle
-class RegisterScreen extends ConsumerWidget {
-  const RegisterScreen({super.key});
+/// ต้องรับ [provider] + [token] ที่ได้จาก social login มาด้วย เพื่อส่งให้
+/// `AuthService.register` ผูก account ใหม่กับ social นั้น
+///
+/// เป็น [ConsumerStatefulWidget] เพราะมี state `_submitting` (กันกดซ้ำตอนเรียก API)
+class RegisterScreen extends ConsumerStatefulWidget {
+  const RegisterScreen({super.key, this.provider, this.token});
 
-  /// ตัวเลือก "ประเภทที่ขาย" ตาม mockup
-  static const List<String> _sellTypeOptions = ['เสื้อผ้า', 'อาหาร', 'Street food'];
+  final String? provider;
+  final String? token;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // watch = อ่านค่า + rebuild เมื่อ state เปลี่ยน (ใช้แสดงสถานะ checkbox)
-    final form = ref.watch(registerFormProvider);
-    // notifier = ตัวเรียกเมธอดแก้ค่า (ไม่ทำให้ rebuild)
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  bool _submitting = false; // กำลังเรียก register API อยู่ไหม
+
+  @override
+  Widget build(BuildContext context) {
     final notifier = ref.read(registerFormProvider.notifier);
 
     return Scaffold(
-      // AppBar ใช้สีจาก theme กลาง (เหลือง) — ไม่ override ที่นี่
-      appBar: AppBar(
-        title: const Text('ลงทะเบียน'),
-      ),
+      // AppBar ใช้สีจาก theme กลาง (เหลือง)
+      appBar: AppBar(title: const Text('ลงทะเบียน')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -47,24 +53,12 @@ class RegisterScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            _label('ที่อยู่'),
+            _label('อีเมล'),
             TextField(
-              onChanged: notifier.setAddress,
-              decoration: _decoration('ที่อยู่'),
+              onChanged: notifier.setEmail,
+              keyboardType: TextInputType.emailAddress,
+              decoration: _decoration('อีเมล'),
             ),
-            const SizedBox(height: 16),
-
-            _label('ประเภทที่ขาย'),
-            for (final type in _sellTypeOptions)
-              CheckboxListTile(
-                value: form.sellTypes.contains(type),
-                onChanged: (_) => notifier.toggleSellType(type),
-                title: Text(type),
-                // สีติ๊กมาจาก checkboxTheme กลาง (เหลือง)
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-              ),
             const SizedBox(height: 16),
 
             _label('เบอร์โทร'),
@@ -80,11 +74,20 @@ class RegisterScreen extends ConsumerWidget {
               height: 52,
               // ปุ่มใช้สีจาก elevatedButtonTheme กลาง (เหลือง + ตัวอักษรเข้ม)
               child: ElevatedButton(
-                onPressed: () => _onSubmit(context),
-                child: const Text(
-                  'ลงทะเบียน',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
+                onPressed: _submitting ? null : _onSubmit,
+                child: _submitting
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(
+                        'ลงทะเบียน',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -93,32 +96,74 @@ class RegisterScreen extends ConsumerWidget {
     );
   }
 
+  /// กด "ลงทะเบียน" → validate → เรียก register API → เข้าหน้าหลัก
+  Future<void> _onSubmit() async {
+    final form = ref.read(registerFormProvider);
+
+    // ── ตรวจข้อมูลเบื้องต้น ──
+    if (form.firstName.isEmpty ||
+        form.lastName.isEmpty ||
+        form.email.isEmpty ||
+        form.phone.isEmpty) {
+      _snack('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+      return;
+    }
+    if (!form.email.contains('@')) {
+      _snack('อีเมลไม่ถูกต้อง');
+      return;
+    }
+    // ต้องมี provider + token จาก social login (ส่งมาทาง extra)
+    if (widget.provider == null || widget.token == null) {
+      _snack('ข้อมูลการเข้าสู่ระบบไม่ครบ ลองเข้าสู่ระบบใหม่');
+      return;
+    }
+
+    setState(() => _submitting = true);
+    final res = await AuthService.register(
+      provider: widget.provider!,
+      token: widget.token!,
+      name: form.firstName,
+      surname: form.lastName,
+      phone: form.phone,
+      email: form.email,
+    );
+    if (!mounted) return;
+    setState(() => _submitting = false);
+
+    if (res.responseEnum == ResponseEnum.success) {
+      // เก็บ session (token/user) ที่ได้จากการสมัคร แล้วเข้าหน้าหลัก
+      // go = แทนที่ stack → กด back จาก Home จะไม่ย้อนกลับมาหน้าลงทะเบียน
+      ref.read(sessionProvider.notifier).setFromLogin(res.data);
+      context.go('/home');
+    } else {
+      _snack('ลงทะเบียนไม่สำเร็จ ลองใหม่อีกครั้ง');
+    }
+  }
+
+  void _snack(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   /// label เล็ก ๆ เหนือช่องกรอก
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+    ),
+  );
 
-  /// หน้าตาช่องกรอก (พื้นเหลืองอ่อนให้เข้ากับธีมเหลือง)
+  /// หน้าตาช่องกรอก (พื้นเทาอ่อนตามธีม)
   InputDecoration _decoration(String hint) => InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: AppColors.fieldFill,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-      );
-
-  /// กด "ลงทะเบียน" (mockup) → เข้าหน้าหลัก
-  /// ข้อมูลที่กรอกถูกเก็บไว้ใน registerFormProvider แล้ว (หน้า Home อ่านชื่อไปแสดง)
-  void _onSubmit(BuildContext context) {
-    // go = แทนที่ stack → กด back จากหน้า Home จะไม่ย้อนกลับมาหน้าลงทะเบียน
-    context.go('/home');
-  }
+    hintText: hint,
+    filled: true,
+    fillColor: AppColors.fieldFill,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide.none,
+    ),
+  );
 }

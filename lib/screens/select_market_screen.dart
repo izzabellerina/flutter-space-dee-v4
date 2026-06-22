@@ -43,10 +43,7 @@ class _SelectMarketScreenState extends State<SelectMarketScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('เลือกตลาด'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('เลือกตลาด'), centerTitle: true),
       body: SafeArea(
         child: Column(
           children: [
@@ -64,11 +61,14 @@ class _SelectMarketScreenState extends State<SelectMarketScreen> {
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
                         fillColor: AppColors.fieldFill, // พื้นเทาตามธีม
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 0,
+                          horizontal: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none, // ไม่มีเส้นขอบ ใช้พื้นเทาแทน
+                          borderSide:
+                              BorderSide.none, // ไม่มีเส้นขอบ ใช้พื้นเทาแทน
                         ),
                       ),
                     ),

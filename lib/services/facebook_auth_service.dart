@@ -2,10 +2,17 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 /// ผลลัพธ์การ login Facebook ที่ส่งกลับให้หน้าจอ
 class FacebookLoginOutcome {
-  const FacebookLoginOutcome({required this.success, required this.message});
+  const FacebookLoginOutcome({
+    required this.success,
+    required this.message,
+    this.token = '',
+  });
 
   final bool success;
   final String message;
+
+  /// access token (classic) ที่ได้จาก Facebook — ส่งให้ backend verify
+  final String token;
 }
 
 /// บริการ login ด้วย Facebook ผ่าน flutter_facebook_auth ตรง ๆ (ไม่ผ่าน Firebase)
@@ -29,7 +36,8 @@ class FacebookAuthService {
       if (result.status != LoginStatus.success || result.accessToken == null) {
         return FacebookLoginOutcome(
           success: false,
-          message: 'เข้าสู่ระบบไม่สำเร็จ: ${result.message ?? result.status.name}',
+          message:
+              'เข้าสู่ระบบไม่สำเร็จ: ${result.message ?? result.status.name}',
         );
       }
 
@@ -38,13 +46,11 @@ class FacebookAuthService {
         fields: 'id,name,first_name,last_name,email,picture.width(400)',
       );
 
-      // TODO(backend): เมื่อมี API แล้ว ส่ง result.accessToken!.tokenString
-      //   ไปให้ backend verify + สร้าง session
-
       final name = userData['name'] as String? ?? 'ผู้ใช้ Facebook';
       return FacebookLoginOutcome(
         success: true,
         message: 'เข้าสู่ระบบสำเร็จ: $name',
+        token: result.accessToken!.tokenString,
       );
     } catch (e) {
       return FacebookLoginOutcome(

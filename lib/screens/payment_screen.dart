@@ -171,10 +171,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final isExpired = _remaining.inSeconds <= 0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('จ่ายเงิน'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('จ่ายเงิน'), centerTitle: true),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -190,11 +187,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: AppColors.cardShadow,
                   ),
-                  child: QrImageView(
-                    data: _qrData,
-                    size: 220,
-                    gapless: true,
-                  ),
+                  child: QrImageView(data: _qrData, size: 220, gapless: true),
                 ),
               ),
               const SizedBox(height: 16),
@@ -302,10 +295,7 @@ class _SummaryBox extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(item.label),
-                  Text('${item.price} บาท'),
-                ],
+                children: [Text(item.label), Text('${item.price} บาท')],
               ),
             ),
           const Divider(height: 24),

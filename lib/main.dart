@@ -1,9 +1,12 @@
+import 'dart:io' show HttpOverrides;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_line_sdk/flutter_line_sdk.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/line_config.dart';
 import 'router/app_router.dart';
+import 'services/configuration.dart';
 import 'theme/app_colors.dart';
 
 void main() {
@@ -11,6 +14,10 @@ void main() {
   // พร้อมรับคำสั่งแล้ว (ปกติ runApp เรียกให้เอง แต่พอเราจะเรียก setup() ก่อน
   // runApp ต้องเรียกเองให้ชัด)
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ยอมรับใบรับรอง (cert) ของ dev server v4.spacedee.co — กัน handshake fail
+  // TODO: เอาออกเมื่อ server มี cert ที่เชื่อถือได้จริง
+  HttpOverrides.global = MyHttpOverrides();
 
   // เตรียม LINE SDK ด้วย Channel ID — ทำครั้งเดียวตอนเปิดแอป
   // ข้ามถ้ายังไม่ได้กรอก Channel ID จริง (กัน error ตอน dev)

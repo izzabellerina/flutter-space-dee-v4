@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
+import '../models/response_model.dart';
+import '../services/auth_service.dart';
 import '../services/facebook_auth_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/line_auth_service.dart';
+import '../state/session.dart';
 import '../theme/app_colors.dart';
 
 /// หน้า Login — มีปุ่มเข้าสู่ระบบ 3 ทาง: LINE / Gmail / Facebook
 ///
 /// ตอนนี้ยังไม่ต่อ SDK จริง (รอ credentials) เมื่อกดปุ่ม เราจะ "log โครงสร้าง
 /// ข้อมูลที่ provider จะคืนมา" ออก console (ดู [AuthLogger]) + เด้ง SnackBar บอก
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       // พื้นหลังไล่สี teal (ห่อ body ด้วย Container เพราะ Scaffold ใส่ gradient ตรง ๆ ไม่ได้)
       body: Container(
@@ -54,32 +58,21 @@ class LoginScreen extends StatelessWidget {
                   icon: FontAwesomeIcons.line, // โลโก้ LINE จริง
                   iconColor: const Color(0xFF06C755), // เขียว LINE
                   onPressed: () =>
-                      _onLineLogin(context), // ← ของจริงแล้ว (ไม่ใช่ mock)
+                      _onLineLogin(context, ref), // ← ของจริงแล้ว (ไม่ใช่ mock)
                 ),
                 const SizedBox(height: 16),
                 _LoginButton(
                   label: 'เข้าสู่ระบบด้วย Gmail',
                   icon: FontAwesomeIcons.google, // โลโก้ Google จริง
                   iconColor: const Color(0xFFEA4335), // แดง Google
-                  onPressed: () => _onGoogleLogin(context), // ← ของจริงแล้ว
+                  onPressed: () => _onGoogleLogin(context, ref),
                 ),
                 const SizedBox(height: 16),
                 _LoginButton(
                   label: 'เข้าสู่ระบบด้วย Facebook',
                   icon: FontAwesomeIcons.facebook, // โลโก้ Facebook จริง
                   iconColor: const Color(0xFF1877F2), // น้ำเงิน Facebook
-                  onPressed: () => _onFacebookLogin(context), // ← ของจริงแล้ว
-                ),
-
-                // ⚠️ TEMP (mockup): ปุ่มชั่วคราวไว้ทดสอบ flow ไปหน้าลงทะเบียน
-                // ของจริงจะไปหน้าลงทะเบียนหลัง login สำเร็จ — อันนี้ไว้เทสเฉย ๆ ลบทีหลังได้
-                const SizedBox(height: 24),
-                TextButton(
-                  onPressed: () => context.push('/register'),
-                  child: const Text(
-                    '🧪 ทดสอบ: ไปหน้าลงทะเบียน',
-                    style: TextStyle(color: AppColors.onGreen),
-                  ),
+                  onPressed: () => _onFacebookLogin(context, ref),
                 ),
               ],
             ),
@@ -89,49 +82,100 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  /// LINE — ของจริง: เรียก SDK login แล้ว log payload จริง + เด้งผลลัพธ์
-  ///
-  /// เป็น async เพราะต้อง "รอ" ผู้ใช้ทำ login บนหน้าจอ LINE ให้เสร็จก่อน
-  Future<void> _onLineLogin(BuildContext context) async {
-    final outcome = await LineAuthService.signIn();
+  // ผลลัพธ์รวมจาก social SDK (แปลงจาก outcome แต่ละเจ้าให้หน้าตาเดียวกัน)
+  // record = โครงสร้างข้อมูลเล็ก ๆ ไม่ต้องสร้าง class
 
-    // ⚠️ หลัง await ต้องเช็ค context.mounted ก่อนใช้ context เสมอ
-    // (หน้าจ ออาจถูกปิดไประหว่างที่ผู้ใช้ค้างอยู่หน้า login ของ LINE)
+  void _onLineLogin(BuildContext context, WidgetRef ref) => _handleSocialLogin(
+    context,
+    ref,
+    provider: 'line',
+    signIn: (nonce) async {
+      final o = await LineAuthService.signIn(nonce: nonce);
+      return (success: o.success, message: o.message, token: o.token);
+    },
+  );
+
+  void _onGoogleLogin(BuildContext context, WidgetRef ref) =>
+      _handleSocialLogin(
+        context,
+        ref,
+        provider: 'google', // ยืนยันแล้ว: backend รับ 'google' ('gmail' = 400)
+        signIn: (nonce) async {
+          final o = await GoogleAuthService.signIn(nonce: nonce);
+          return (success: o.success, message: o.message, token: o.token);
+        },
+      );
+
+  void _onFacebookLogin(
+    BuildContext context,
+    WidgetRef ref,
+  ) => _handleSocialLogin(
+    context,
+    ref,
+    provider: 'facebook',
+    signIn: (nonce) async {
+      // Facebook SDK ไม่รองรับ nonce — รับ param ไว้เฉย ๆ ให้ signature ตรงกัน
+      final o = await FacebookAuthService.signIn();
+      return (success: o.success, message: o.message, token: o.token);
+    },
+  );
+
+  /// flow login กลาง: ดึง nonce → social SDK login (ใส่ nonce) → เรียก login API
+  /// → ลงทะเบียนแล้วไป /home, ยังไม่ลงทะเบียนไป /register
+  Future<void> _handleSocialLogin(
+    BuildContext context,
+    WidgetRef ref, {
+    required String provider,
+    required Future<({bool success, String message, String token})> Function(
+      String nonce,
+    )
+    signIn,
+  }) async {
+    // 1) ดึง nonce จาก backend
+    final nonceRes = await AuthService.nonce();
+    if (!context.mounted) return;
+    if (nonceRes.responseEnum != ResponseEnum.success) {
+      _snack(context, 'ขอ nonce ไม่สำเร็จ ลองใหม่อีกครั้ง');
+      return;
+    }
+    final nonce = nonceRes.data.nonce;
+
+    // 2) login ด้วย social SDK (ฝัง nonce ลง token)
+    final outcome = await signIn(nonce);
+    if (!context.mounted) return;
+    if (!outcome.success) {
+      _snack(context, outcome.message);
+      return;
+    }
+
+    // 3) ส่ง token ให้ backend verify
+    final loginRes = await AuthService.login(
+      provider: provider,
+      token: outcome.token,
+      nonce: nonce,
+    );
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(outcome.message),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    // 4) นำทางตามผลลัพธ์
+    switch (loginRes.responseEnum) {
+      case ResponseEnum.success:
+        // ลงทะเบียนแล้ว → เก็บ session (token/user) แล้วเข้าหน้าหลัก
+        ref.read(sessionProvider.notifier).setFromLogin(loginRes.data);
+        context.go('/home');
+      case ResponseEnum.accountNotRegistered:
+        // ยังไม่ลงทะเบียน → ไปหน้าลงทะเบียน (ส่ง provider + token ไปใช้ตอน register)
+        context.go(
+          '/register',
+          extra: {'provider': provider, 'token': outcome.token},
+        );
+      default:
+        _snack(context, 'เข้าสู่ระบบไม่สำเร็จ');
+    }
   }
 
-  /// Gmail (Google) — ของจริง: google_sign_in → firebase_auth → log payload
-  Future<void> _onGoogleLogin(BuildContext context) async {
-    final outcome = await GoogleAuthService.signIn();
-
-    if (!context.mounted) return; // กัน crash ถ้าหน้าถูกปิดระหว่าง await
-
+  void _snack(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(outcome.message),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  /// Facebook — ของจริง: flutter_facebook_auth → firebase_auth → log payload
-  Future<void> _onFacebookLogin(BuildContext context) async {
-    final outcome = await FacebookAuthService.signIn();
-
-    if (!context.mounted) return; // กัน crash ถ้าหน้าถูกปิดระหว่าง await
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(outcome.message),
-        duration: const Duration(seconds: 2),
-      ),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
   }
 }

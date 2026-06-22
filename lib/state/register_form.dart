@@ -11,32 +11,26 @@ class RegisterForm {
   const RegisterForm({
     this.firstName = '',
     this.lastName = '',
-    this.address = '',
+    this.email = '',
     this.phone = '',
-    this.sellTypes = const {},
   });
 
   final String firstName;
   final String lastName;
-  final String address;
+  final String email;
   final String phone;
-
-  /// ประเภทที่ขาย (เลือกได้หลายอัน) — เก็บเป็น Set เพราะไม่ซ้ำ + เช็ก contains ง่าย
-  final Set<String> sellTypes;
 
   RegisterForm copyWith({
     String? firstName,
     String? lastName,
-    String? address,
+    String? email,
     String? phone,
-    Set<String>? sellTypes,
   }) {
     return RegisterForm(
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
-      address: address ?? this.address,
+      email: email ?? this.email,
       phone: phone ?? this.phone,
-      sellTypes: sellTypes ?? this.sellTypes,
     );
   }
 }
@@ -49,19 +43,8 @@ class RegisterFormNotifier extends Notifier<RegisterForm> {
 
   void setFirstName(String v) => state = state.copyWith(firstName: v);
   void setLastName(String v) => state = state.copyWith(lastName: v);
-  void setAddress(String v) => state = state.copyWith(address: v);
+  void setEmail(String v) => state = state.copyWith(email: v);
   void setPhone(String v) => state = state.copyWith(phone: v);
-
-  /// ติ๊ก/เอาออก ประเภทที่ขาย
-  void toggleSellType(String type) {
-    final next = {...state.sellTypes}; // copy ออกมาก่อน (ห้ามแก้ Set เดิมตรง ๆ)
-    if (next.contains(type)) {
-      next.remove(type);
-    } else {
-      next.add(type);
-    }
-    state = state.copyWith(sellTypes: next);
-  }
 
   void reset() => state = const RegisterForm();
 }
@@ -70,5 +53,5 @@ class RegisterFormNotifier extends Notifier<RegisterForm> {
 /// `ref.read(registerFormProvider.notifier)` เรียกเมธอดแก้ค่า
 final registerFormProvider =
     NotifierProvider<RegisterFormNotifier, RegisterForm>(
-  RegisterFormNotifier.new,
-);
+      RegisterFormNotifier.new,
+    );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'booking_list_tab.dart';
 import 'home_tab.dart';
+import 'more_tab.dart';
 
 /// หน้าหลักหลัง login/ลงทะเบียน — มี bottom navigation 4 แท็บ
 ///
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeTab(),
     BookingListTab(),
     _PlaceholderTab(label: 'ประวัติ'),
-    _PlaceholderTab(label: 'อื่น ๆ'),
+    MoreTab(),
   ];
 
   @override
@@ -45,14 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
             selectedIcon: Icon(Icons.description),
             label: 'การจอง',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.history),
-            label: 'ประวัติ',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.more_horiz),
-            label: 'อื่น ๆ',
-          ),
+          NavigationDestination(icon: Icon(Icons.history), label: 'ประวัติ'),
+          NavigationDestination(icon: Icon(Icons.more_horiz), label: 'อื่น ๆ'),
         ],
       ),
     );

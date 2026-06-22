@@ -18,26 +18,25 @@ import '../screens/splash_screen.dart';
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const SplashScreen(),
-    ),
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
-      builder: (context, state) => const RegisterScreen(),
+      // provider + token (จาก social login) ส่งมาผ่าน extra เพื่อใช้ตอน register
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return RegisterScreen(
+          provider: extra?['provider'] as String?,
+          token: extra?['token'] as String?,
+        );
+      },
     ),
-    GoRoute(
-      path: '/home',
-      builder: (context, state) => const HomeScreen(),
-    ),
+    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     GoRoute(
       path: '/payment',
       // ชื่อตลาดถูกส่งมาผ่าน extra (กดมาจากการ์ดการจอง)
-      builder: (context, state) => PaymentScreen(market: state.extra as String?),
+      builder: (context, state) =>
+          PaymentScreen(market: state.extra as String?),
     ),
     GoRoute(
       path: '/select-market',
